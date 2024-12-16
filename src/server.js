@@ -28,6 +28,32 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+app.get("/user", async (req, res) => {
+  const username = req.body.firstName;
+  try {
+    const user = await User.findOne({
+      firstName: { $regex: new RegExp(username, "i") },
+    });
+
+    if (!user) {
+      res.status(404).send("user not found");
+    } else {
+      res.status(200).send(user);
+    }
+  } catch (error) {
+    res.status(500).send("Something went wrong due to" + error);
+  }
+});
+
+// get all the users
+app.get("/feed", async (req, res) => {
+  try {
+    const users = await User.find({});
+    res.send(users);
+  } catch (error) {
+    res.status(500).send("Something went wrong due to" + error);
+  }
+});
 //calling the connectionDB function and it will connects database
 //  and then it connects to the server
 connectionDB().then(() => {
