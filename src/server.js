@@ -54,6 +54,31 @@ app.get("/feed", async (req, res) => {
     res.status(500).send("Something went wrong due to" + error);
   }
 });
+
+//delete user from the DB by id
+app.delete("/user", async (req, res) => {
+  const userId = req.body.userId;
+  try {
+    await User.findByIdAndDelete(userId);
+    res.status(200).send("User deleted successfully");
+  } catch (error) {
+    res.status(500).send("Something went wrong due to" + error);
+  }
+});
+
+//update user profile by id
+app.patch("/user", async (req, res) => {
+  //userId
+  const userId = req.body.userId;
+  //data we want to update via client request
+  const data = req.body;
+  try {
+    await User.findByIdAndUpdate(userId, data);
+    res.send("user updated successfully");
+  } catch (error) {
+    res.status(500).send("Something went wrong due to" + error);
+  }
+});
 //calling the connectionDB function and it will connects database
 //  and then it connects to the server
 connectionDB().then(() => {
