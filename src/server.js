@@ -67,12 +67,19 @@ app.delete("/user", async (req, res) => {
 });
 
 //update user profile by id
-app.patch("/user", async (req, res) => {
+app.patch("/user/:userId", async (req, res) => {
   //userId
-  const userId = req.body.userId;
+  const userId = req.params?.userId;
   //data we want to update via client request
   const data = req.body;
   try {
+    const allowedEntites = ["skills", "about", "gender", "age"];
+    const allowedUpdates = Object.keys(data).every((k) =>
+      allowedEntites.includes(k)
+    );
+    if (!allowedUpdates) {
+      throw new Error("Updates are not allowed");
+    }
     await User.findByIdAndUpdate(userId, data, { runValidators: true });
     res.send("user updated successfully");
   } catch (error) {

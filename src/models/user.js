@@ -41,10 +41,24 @@ const userSchema = new mongoose.Schema(
         /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
         "Please provide a valid email address",
       ],
+      immutable: true,
     },
     password: {
       type: String,
       required: true,
+    },
+    skills: {
+      type: [String],
+      validate: {
+        validator: function (value) {
+          return value.length <= 5; // Ensure array length is not greater than 10
+        },
+        message: "You must specify no more than 10 skills", // Updated error message
+      },
+    },
+    about: {
+      type: String,
+      default: "This is the user ABOUT section",
     },
   },
   { timestamps: true }
