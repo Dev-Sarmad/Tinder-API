@@ -4,22 +4,26 @@ const connectionDB = require("./config/db");
 
 const User = require("./models/user");
 
+const bcrypt = require("bcrypt");
+
 //initializing the app using the express
 const app = express();
 
-//our express server does not accept the javascript object from the client so we use the middelware
-//app.use(this middleware will be used across all the application)
 app.use(express.json());
+
 app.post("/signup", async (req, res) => {
-  //creating the new instance of user model
-  //earlier we were not sending the javascript object to the server via client
-  //instead we were creating the object on server itself here we will be sending data to the server
-  const user = new User(req.body);
-  console.log(user);
-  //this object will be saved in the database
-  //all of the mongoose functions either you are getting , savnig data into the database
-  // It will return you a promise so we use await here
+  const { firstName, lastName, password, email, gender, age } = req.body;
   try {
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = new User({
+      firstName,
+      lastName,
+      email,
+      gender,
+      age,
+      password: passwordHash,
+    });
+    console.log(user);
     await user.save();
 
     res.send("user created successfully");
@@ -28,6 +32,24 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+//login APi
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email: email });
+    if (!user) {
+      res.send("Account with this email not found");
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (isPasswordValid) {
+      res.status(200).send("login successful");
+    } else {
+      res.send("invalid credetials");
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
 app.get("/user", async (req, res) => {
   const username = req.body.firstName;
   try {
