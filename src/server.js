@@ -6,10 +6,16 @@ const User = require("./models/user");
 
 const bcrypt = require("bcrypt");
 
+const jwt = require("jsonwebtoken");
+
+const cookieParser = require("cookie-parser");
 //initializing the app using the express
 const app = express();
 
 app.use(express.json());
+
+//to read the cookie we need a middleware called Cookie-parser
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
   const { firstName, lastName, password, email, gender, age } = req.body;
@@ -42,6 +48,9 @@ app.post("/login", async (req, res) => {
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (isPasswordValid) {
+      //create a jwt token and send back to the user verfied account
+      const token = await jwt.sign({ _id: user.id }, "secretkeyhere");
+      res.cookie("token", token);
       res.status(200).send("login successful");
     } else {
       res.send("invalid credetials");
@@ -50,6 +59,32 @@ app.post("/login", async (req, res) => {
     console.log(error);
   }
 });
+//get user profile
+app.get("/profile", async (req, res) => {
+  const cookies = req.cookies;
+  //get the token and validate it either it is an actual user or not
+  try {
+    const { token } = cookies;
+    if (!token) {
+      throw new Error("Invalid Token");
+    }
+    //validate token
+    const decodedMessage = await jwt.verify(token, "secretkeyhere");
+    //extract the information from the token here it is an id
+    const { _id } = decodedMessage;
+    console.log("loggedin user is " + _id);
+    //getting the user profile here
+    const user = await User.findById(_id);
+    if (!user) {
+      throw new Error("user does not exist");
+    }
+    console.log("user is " + user);
+    res.send("getting cookie back...." + user);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+});
+
 app.get("/user", async (req, res) => {
   const username = req.body.firstName;
   try {
