@@ -8,6 +8,9 @@ const bcrypt = require("bcrypt");
 
 const jwt = require("jsonwebtoken");
 
+//auth middleware
+const { userAuth } = require("./middlewares/auth");
+
 const cookieParser = require("cookie-parser");
 //initializing the app using the express
 const app = express();
@@ -60,26 +63,10 @@ app.post("/login", async (req, res) => {
   }
 });
 //get user profile
-app.get("/profile", async (req, res) => {
-  const cookies = req.cookies;
-  //get the token and validate it either it is an actual user or not
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const { token } = cookies;
-    if (!token) {
-      throw new Error("Invalid Token");
-    }
-    //validate token
-    const decodedMessage = await jwt.verify(token, "secretkeyhere");
-    //extract the information from the token here it is an id
-    const { _id } = decodedMessage;
-    console.log("loggedin user is " + _id);
-    //getting the user profile here
-    const user = await User.findById(_id);
-    if (!user) {
-      throw new Error("user does not exist");
-    }
-    console.log("user is " + user);
-    res.send("getting cookie back...." + user);
+    const user = req.user;
+    res.status(200).send(user);
   } catch (error) {
     res.status(400).send(error.message);
   }
