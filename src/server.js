@@ -49,10 +49,10 @@ app.post("/login", async (req, res) => {
     if (!user) {
       res.send("Account with this email not found");
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await user.validatePassword(password);
     if (isPasswordValid) {
       //create a jwt token and send back to the user verfied account
-      const token = await jwt.sign({ _id: user.id }, "secretkeyhere");
+      const token = await user.getJWT();
       res.cookie("token", token);
       res.status(200).send("login successful");
     } else {
