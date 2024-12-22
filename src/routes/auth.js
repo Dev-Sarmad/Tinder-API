@@ -4,7 +4,6 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const { userAuth } = require("../middlewares/auth");
 
-
 authRouter.post("/signup", async (req, res) => {
   const { firstName, lastName, password, email, gender, age } = req.body;
   try {
@@ -19,7 +18,9 @@ authRouter.post("/signup", async (req, res) => {
     });
     console.log(user);
     await user.save();
-
+          //create a jwt token and send back to the user verfied account
+          const token = await user.getJWT();
+          res.cookie("token", token);
     res.send("user created successfully");
   } catch (error) {
     console.log(error);
@@ -36,9 +37,6 @@ authRouter.post("/login", userAuth, async (req, res) => {
     }
     const isPasswordValid = await user.validatePassword(password);
     if (isPasswordValid) {
-      //create a jwt token and send back to the user verfied account
-      const token = await user.getJWT();
-      res.cookie("token", token);
       res.status(200).send("login successful");
     } else {
       res.send("invalid credetials");
@@ -48,4 +46,10 @@ authRouter.post("/login", userAuth, async (req, res) => {
   }
 });
 
-module.exports = authRouter ;
+//logout api
+authRouter.post("/logout", async (req, res) => {
+  res.cookie("token", null, { expires: new Date(Date.now()) });
+  res.send("logout successfully");
+});
+
+module.exports = authRouter;
