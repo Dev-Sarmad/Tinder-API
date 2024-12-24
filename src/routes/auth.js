@@ -28,7 +28,7 @@ authRouter.post("/signup", async (req, res) => {
 });
 
 //login APi
-authRouter.post("/login", userAuth, async (req, res) => {
+authRouter.post("/login",  async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email: email });
@@ -37,6 +37,8 @@ authRouter.post("/login", userAuth, async (req, res) => {
     }
     const isPasswordValid = await user.validatePassword(password);
     if (isPasswordValid) {
+      const token = await user.getJWT();
+          res.cookie("token", token);
       res.status(200).send("login successful");
     } else {
       res.send("invalid credetials");

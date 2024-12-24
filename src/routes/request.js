@@ -38,13 +38,50 @@ requestRouter.post(
       });
 
       const request = await connectionRequest.save();
-      const response =
-        status === " interested"
-          ? `${req.user.firsName} is interested in ${toUserId.firstName}`
-          : `You ignored ${toUserId.firstName}`;
-      res.json({ message: response, request });
+      const responseMessage =
+        status == "interested"
+          ? `Connection request sent to ${existUserInDB.firstName}`
+          : `You ignored ${existUserInDB.firstName}`;
+      res.json({ message: responseMessage });
     } catch (error) {
       res.status(400).send("request sending failed due to" + error.message);
+    }
+  }
+);
+
+requestRouter.post(
+  "/request/review/:status/:requestId",
+  userAuth,
+  async (req, res) => {
+    // sarmad => ayesha
+    // ayesha should be logged in to see
+    try {
+      const { status, requestId } = req.params;
+      const loggedInUser = req.user;
+      const allowedStatus = ["accepted", "rejected"];
+      if (!allowedStatus.includes(status)) {
+        return res.send("Invalid status");
+      }
+      const connectionRequest = await ConnectionRequest.findOne({
+        //status  should only be interested in connection request collections
+        status: "interested",
+        //request id is the connection request collection id
+        _id: requestId,
+        // the loggedin user which received the request
+        toUserId: loggedInUser._id,
+      });
+      if (!connectionRequest) {
+        return res
+          .status(404)
+          .json({ message: "connection request not found" });
+      }
+      connectionRequest.status = status;
+      const reviewRequest = await connectionRequest.save();
+      res.json({ reviewRequest });
+    } catch (error) {
+      res
+        .status(400)
+        .json({ message: `something wen wrong due to` + error.message });
     }
   }
 );
