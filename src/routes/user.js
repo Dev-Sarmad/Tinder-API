@@ -57,6 +57,10 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
 userRouter.get("/feed", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 50 ? 50 : limit;
+    const skip = (page - 1) * limit;
     //i dont want users which have send the request to me and i have send the request to them
     //and also dont want to see in feed which are already in my connections
     const connectionRequests = await ConnectionRequest.find({
@@ -80,7 +84,10 @@ userRouter.get("/feed", userAuth, async (req, res) => {
         { _id: { $nin: Array.from(hideFromUserFeed) } },
         { _id: { $ne: loggedInUser._id } },
       ],
-    }).select(UserSafeData);
+    })
+      .select(UserSafeData)
+      .skip(skip)
+      .limit(limit);
     res.json({ message: "data except from loggedinUser", data: allUsers });
   } catch (error) {
     res.send("Something went wrong", error.message);
